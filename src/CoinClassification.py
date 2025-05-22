@@ -7,10 +7,11 @@ from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import numpy as np
-from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, FullGrad
 from pytorch_grad_cam.utils.image import show_cam_on_image
 import cv2
 import math
+import hdbscan
 
 # Modell laden
 model = models.resnet50(pretrained=True)
@@ -32,7 +33,7 @@ transform = transforms.Compose([
 ])
 
 # Bilder laden
-image_dir = "E:/Uni/Master/DataChallanges/coin_classification/Dataset/obverse/Prot"
+image_dir = "E:/Uni/Master/DataChallanges/coin_classification/Dataset/obverse/A"
 image_paths = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith(".jpg")]
 images = [transform(Image.open(p).convert("RGB")) for p in image_paths]
 
@@ -45,25 +46,33 @@ with torch.no_grad():
         gap = torch.mean(features[0], dim=[2, 3])  # Global Average Pooling
         embeddings.append(gap.squeeze().numpy())
 
-# Clustering mit KMeans
+# Clustering mit HDBSCAN (automatische Clusteranzahl)
 X = np.array(embeddings)
-kmeans = KMeans(n_clusters=10, random_state=0).fit(X)
-labels = kmeans.labels_
+clusterer = hdbscan.HDBSCAN(min_cluster_size=2, min_samples=1, cluster_selection_method='eom', metric='euclidean')
+labels = clusterer.fit_predict(X)
 
 # Print Cluster-Zuordnung
 print("Cluster-Zuordnung der Münzbilder:\n")
 for path, label in zip(image_paths, labels):
     print(f"Cluster {label}: {os.path.basename(path)}")
 
+# Anzahl der Cluster und Outlier anzeigen
+n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+n_outliers = list(labels).count(-1)
+print(f"\nGefundene Cluster: {n_clusters}")
+print(f"Outlier (nicht zugeordnet): {n_outliers}")
+
 # t-SNE für Visualisierung
 tsne = TSNE(n_components=2, random_state=0)
 X_2d = tsne.fit_transform(X)
 
-plt.figure(figsize=(8, 6))
-plt.scatter(X_2d[:, 0], X_2d[:, 1], c=labels, cmap="viridis")
-plt.title("Clustering der Münzen mit ResNet50 + t-SNE")
+plt.figure(figsize=(10, 7))
+plt.scatter(X_2d[:, 0], X_2d[:, 1], c=labels, cmap="tab10", s=40)
+plt.title("HDBSCAN-Clustering der Münzen (t-SNE Visualisierung)")
 plt.xlabel("t-SNE 1")
 plt.ylabel("t-SNE 2")
+plt.colorbar(label="Cluster")
+plt.grid(True)
 plt.show()
 
 # -----------------------------
@@ -74,7 +83,7 @@ target_layer = model.layer4[-1]
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
-cam = GradCAM(model=model, target_layers=[target_layer])
+cam = HiResCAM(model=model, target_layers=[target_layer])
 if torch.cuda.is_available():
     model.to('cuda')
 
