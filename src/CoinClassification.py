@@ -12,6 +12,11 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 import cv2
 import math
 import hdbscan
+from collections import defaultdict
+from GradCamVisualization import visualize_clusters, visualize_order  # Importiere die Funktion aus dem Plot-Skript
+
+#Choose mode of visualization
+mode = 1  # 1 == "ClusterVisualization" oder 2 == "OrderVisualization"
 
 # Modell laden
 model = models.resnet50(pretrained=True)
@@ -33,7 +38,7 @@ transform = transforms.Compose([
 ])
 
 # Bilder laden
-image_dir = "E:/Uni/Master/DataChallanges/coin_classification/Dataset/obverse/A"
+image_dir = "Dataset/obverse/Prot"
 image_paths = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith(".jpg")]
 images = [transform(Image.open(p).convert("RGB")) for p in image_paths]
 
@@ -75,8 +80,7 @@ plt.colorbar(label="Cluster")
 plt.grid(True)
 plt.show()
 
-# -----------------------------
-# 🔍 Grad-CAM Visualisierung
+
 # -----------------------------
 target_layer = model.layer4[-1]
 
@@ -87,39 +91,15 @@ cam = HiResCAM(model=model, target_layers=[target_layer])
 if torch.cuda.is_available():
     model.to('cuda')
 
-# Anzeigen
-images_per_page = 10
-num_pages = math.ceil(len(images) / images_per_page)
 
-for page in range(num_pages):
-    start_idx = page * images_per_page
-    end_idx = min((page + 1) * images_per_page, len(images))
-    subset = list(zip(images[start_idx:end_idx], image_paths[start_idx:end_idx]))
+# Visualisierung der Cluster oder der Reihenfolge
+if mode == 1:
+    # Clusterweise Gruppieren
+    clustered_images = defaultdict(list)
+    for label, img_tensor, path in zip(labels, images, image_paths):
+        clustered_images[label].append((img_tensor, path))
 
-    plt.figure(figsize=(12, 3 * len(subset)))  # Breite anpassen nach Bedarf
+    visualize_clusters(clustered_images, cam, device)
+elif mode == 2:
+    visualize_order(images, image_paths, cam, device)
 
-    for i, (img_tensor, path) in enumerate(subset):
-        input_tensor = img_tensor.unsqueeze(0).to(device)
-        grayscale_cam = cam(input_tensor=input_tensor)[0]
-
-        # Originalbild vorbereiten
-        img_pil = Image.open(path).convert("RGB").resize((224, 224))
-        img_np = np.array(img_pil).astype(np.float32) / 255.0
-        visualization = show_cam_on_image(img_np, grayscale_cam, use_rgb=True)
-
-        # Originalbild
-        plt.subplot(len(subset), 2, 2 * i + 1)
-        plt.imshow(img_np)
-        plt.axis("off")
-        plt.title(f"Original: {os.path.basename(path)}")
-
-        # Grad-CAM Overlay
-        plt.subplot(len(subset), 2, 2 * i + 2)
-        plt.imshow(visualization)
-        plt.axis("off")
-        plt.title("Grad-CAM")
-
-    plt.tight_layout()
-    plt.suptitle(f"Seite {page + 1}/{num_pages}", fontsize=16)
-    plt.subplots_adjust(top=0.95)  # Platz für Titel
-    plt.show()
