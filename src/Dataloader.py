@@ -46,7 +46,8 @@ class TripletFolderDataset(Dataset):
 #Beispiel-Transformation
 
 transform = transforms.Compose([
-    transforms.Resize((224, 224)),
+    #transforms.Resize((224, 224)),
+    transforms.Resize((348, 348)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225])
@@ -58,7 +59,7 @@ dataset = TripletFolderDataset("Trainingsset", transform=transform)
 # 3. Aufteilen in Training und Validierung
 from torch.utils.data import random_split
 
-train_size = int(0.8 * len(dataset))
+train_size = int(0.7 * len(dataset))
 val_size = len(dataset) - train_size
 train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 

@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -19,37 +20,17 @@ class EmbeddingNet(nn.Module):
         x = nn.functional.normalize(x, p=2, dim=1)  # L2-Norm
         return x
 
-model = EmbeddingNet().to("cuda" if torch.cuda.is_available() else "cpu")
+def train_model():
+    model = EmbeddingNet().to("cuda" if torch.cuda.is_available() else "cpu")
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-criterion = nn.TripletMarginLoss(margin=0.2)
-optimizer = optim.Adam(model.parameters(), lr=1e-4)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    criterion = nn.TripletMarginLoss(margin=0.3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-for epoch in range(10):
-    model.train()
-    total_train_loss = 0
-    for anchor, positive, negative in train_loader:
-        anchor = anchor.to(device)
-        positive = positive.to(device)
-        negative = negative.to(device)
-
-        emb_a = model(anchor)
-        emb_p = model(positive)
-        emb_n = model(negative)
-
-        loss = criterion(emb_a, emb_p, emb_n)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        total_train_loss += loss.item()
-
-    avg_train_loss = total_train_loss / len(train_loader)
-
-    # Validation
-    model.eval()
-    total_val_loss = 0
-    with torch.no_grad():
-        for anchor, positive, negative in val_loader:
+    for epoch in range(10):
+        model.train()
+        total_train_loss = 0
+        for anchor, positive, negative in train_loader:
             anchor = anchor.to(device)
             positive = positive.to(device)
             negative = negative.to(device)
@@ -58,9 +39,41 @@ for epoch in range(10):
             emb_p = model(positive)
             emb_n = model(negative)
 
-            val_loss = criterion(emb_a, emb_p, emb_n)
-            total_val_loss += val_loss.item()
+            loss = criterion(emb_a, emb_p, emb_n)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            total_train_loss += loss.item()
 
-    avg_val_loss = total_val_loss / len(val_loader)
+        avg_train_loss = total_train_loss / len(train_loader)
 
-    print(f"Epoch {epoch+1}: Train Loss = {avg_train_loss:.4f} | Val Loss = {avg_val_loss:.4f}")
+        # Validation
+        model.eval()
+        total_val_loss = 0
+        with torch.no_grad():
+            for anchor, positive, negative in val_loader:
+                anchor = anchor.to(device)
+                positive = positive.to(device)
+                negative = negative.to(device)
+
+                emb_a = model(anchor)
+                emb_p = model(positive)
+                emb_n = model(negative)
+
+                val_loss = criterion(emb_a, emb_p, emb_n)
+                total_val_loss += val_loss.item()
+
+        avg_val_loss = total_val_loss / len(val_loader)
+
+        print(f"Epoch {epoch+1}: Train Loss = {avg_train_loss:.4f} | Val Loss = {avg_val_loss:.4f}")
+ 
+    model_name = "triplet_model.pth"
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(current_dir, "..", "modell", model_name)
+
+    torch.save(model.state_dict(), model_path)
+
+if __name__ == "__main__":
+    train_model()
+    
