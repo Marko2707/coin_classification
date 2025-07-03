@@ -2,7 +2,8 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 import torchvision.models as models
-from Dataloader import dataloader 
+from Dataloader import train_loader, val_loader
+from torch.utils.data import random_split
 
 class EmbeddingNet(nn.Module):
     def __init__(self):
@@ -24,10 +25,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 criterion = nn.TripletMarginLoss(margin=0.2)
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-for epoch in range(10):  # z. B. 10 Epochen
+for epoch in range(10):
     model.train()
-    total_loss = 0
-    for anchor, positive, negative in dataloader:
+    total_train_loss = 0
+    for anchor, positive, negative in train_loader:
         anchor = anchor.to(device)
         positive = positive.to(device)
         negative = negative.to(device)
@@ -37,12 +38,29 @@ for epoch in range(10):  # z. B. 10 Epochen
         emb_n = model(negative)
 
         loss = criterion(emb_a, emb_p, emb_n)
-
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        total_train_loss += loss.item()
 
-        total_loss += loss.item()
+    avg_train_loss = total_train_loss / len(train_loader)
 
-    avg_loss = total_loss / len(dataloader)
-    print(f"Epoch {epoch+1}: Avg. Triplet Loss = {avg_loss:.4f}")
+    # Validation
+    model.eval()
+    total_val_loss = 0
+    with torch.no_grad():
+        for anchor, positive, negative in val_loader:
+            anchor = anchor.to(device)
+            positive = positive.to(device)
+            negative = negative.to(device)
+
+            emb_a = model(anchor)
+            emb_p = model(positive)
+            emb_n = model(negative)
+
+            val_loss = criterion(emb_a, emb_p, emb_n)
+            total_val_loss += val_loss.item()
+
+    avg_val_loss = total_val_loss / len(val_loader)
+
+    print(f"Epoch {epoch+1}: Train Loss = {avg_train_loss:.4f} | Val Loss = {avg_val_loss:.4f}")

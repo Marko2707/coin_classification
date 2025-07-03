@@ -52,7 +52,23 @@ transform = transforms.Compose([
                          std=[0.229, 0.224, 0.225])
 ])
 
-#Lade den Datensatz
+# 2. Gesamtdatensatz laden
+dataset = TripletFolderDataset("Trainingsset", transform=transform)
+
+# 3. Aufteilen in Training und Validierung
+from torch.utils.data import random_split
+
+train_size = int(0.8 * len(dataset))
+val_size = len(dataset) - train_size
+train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+
+# 4. DataLoader erstellen
+from torch.utils.data import DataLoader
+
+train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
+
+"""#Lade den Datensatz
 dataset = TripletFolderDataset("Trainingsset", transform=transform)
 dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
 
@@ -77,3 +93,4 @@ for batch_idx, (anchors, positives, negatives) in enumerate(dataloader):
     print(f"  Negative shape: {negatives.shape}")
     print(f"  Anchor min/max: {anchors.min().item():.2f} / {anchors.max().item():.2f}")
     break  # Nur ersten Batch anzeigen
+"""
