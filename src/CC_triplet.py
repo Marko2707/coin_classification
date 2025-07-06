@@ -1,19 +1,22 @@
 import os
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+import numpy as np
 from PIL import Image
 from collections import defaultdict
-from torchvision import transforms
-from torchvision import models
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
-import numpy as np
 import hdbscan
-from pytorch_grad_cam import HiResCAM, GradCAM
-from pytorch_grad_cam.utils.image import show_cam_on_image
+from torchvision import transforms
+
 from training_triplets import EmbeddingNet
 from GradCamVisualization import visualize_clusters, visualize_order
+from pytorch_grad_cam import GradCAM
+
+from training_triplets import preprocess_batch_grayscale, preprocess_batch_crop_only  # deine beiden Funktionen
+
+# ---------- SETTINGS ---------- #
+use_grayscale_and_crop = False  # Setze False für nur Crop
+
 
 # ---------- SETTINGS ---------- #
 mode = 1  # 1 = ClusterVisualization, 2 = OrderVisualization
@@ -27,29 +30,35 @@ model.load_state_dict(torch.load(model_path, map_location=device))
 model.eval()
 
 # ---------- GRAD-CAM SETUP ---------- #
-# target_layer = model.feature_extractor[-1]
 target_layer = model.feature_extractor[7][2].conv3
-#cam = HiResCAM(model=model, target_layers=[target_layer])
 cam = GradCAM(model=model, target_layers=[target_layer])
-print(model.feature_extractor)
 
 # ---------- IMAGE LOADING ---------- #
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                         std=[0.229, 0.224, 0.225])
-])
-
-image_dir = os.path.join(current_dir, "..", "entirety", "obv")
+image_dir = os.path.join(current_dir, "..", "dataset", "obverse", "Prot")
+#image_dir = os.path.join(current_dir, "..", "entirety", "obv")
 image_paths = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith(".jpg")]
-images = [transform(Image.open(p).convert("RGB")) for p in image_paths]
+
+image_tensors = []
+for p in image_paths:
+    img = Image.open(p).convert("RGB").resize((224, 224))
+    img_tensor = transforms.ToTensor()(img)  # float tensor [3, 224, 224]
+    image_tensors.append(img_tensor)
+
+batch = torch.stack(image_tensors)  # [B, 3, 224, 224]
+
+# ---------- PREPROCESSING ---------- #
+if use_grayscale_and_crop:
+    processed_batch = preprocess_batch_grayscale(batch, img_size=224)          # mit Grayscale + Crop
+else:
+    processed_batch = preprocess_batch_crop_only(batch, img_size=224)  # nur Crop
+
+processed_batch = processed_batch.to(device)
 
 # ---------- FEATURE EXTRACTION ---------- #
 embeddings = []
 with torch.no_grad():
-    for img in images:
-        emb = model(img.unsqueeze(0).to(device))
+    for img_tensor in processed_batch:
+        emb = model(img_tensor.unsqueeze(0))
         embeddings.append(emb.squeeze().cpu().numpy())
 
 X = np.array(embeddings)
@@ -80,13 +89,11 @@ plt.colorbar(label="Cluster")
 plt.grid(True)
 plt.show()
 
-# Visualisierung der Cluster oder der Reihenfolge
+# ---------- VISUALISIERUNG ---------- #
 if mode == 1:
-    # Clusterweise Gruppieren
     clustered_images = defaultdict(list)
-    for label, img_tensor, path in zip(labels, images, image_paths):
+    for label, img_tensor, path in zip(labels, processed_batch, image_paths):
         clustered_images[label].append((img_tensor, path))
-
     visualize_clusters(clustered_images, cam, device)
 elif mode == 2:
-    visualize_order(images, image_paths, cam, device)
+    visualize_order(processed_batch, image_paths, cam, device)
