@@ -34,8 +34,8 @@ target_layer = model.feature_extractor[7][2].conv3
 cam = GradCAM(model=model, target_layers=[target_layer])
 
 # ---------- IMAGE LOADING ---------- #
-image_dir = os.path.join(current_dir, "..", "dataset", "obverse", "Prot")
-#image_dir = os.path.join(current_dir, "..", "entirety", "obv")
+# image_dir = os.path.join(current_dir, "..", "dataset", "obverse", "Prot")
+image_dir = os.path.join(current_dir, "..", "entirety", "obv")
 image_paths = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith(".jpg")]
 
 image_tensors = []

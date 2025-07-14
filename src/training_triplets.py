@@ -74,7 +74,7 @@ def train_model():
     criterion = nn.TripletMarginLoss(margin=0.3)
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-    for epoch in range(3):
+    for epoch in range(10):
         model.train()
         total_train_loss = 0
         for anchor, positive, negative in train_loader:
