@@ -10,26 +10,22 @@ import torchvision.transforms.functional as TF
 
 from Preprocessing import apply_circle_crop, apply_grayscale
 
+from model import EmbeddingNet
+
 #------------------------------------------------
 # Set to True for grayscale images, False for color images!
-use_grayscale = False  
+use_grayscale = True  
 
 #------------------------------------------------
+import matplotlib.pyplot as plt
 
+def show_image(tensor_img, title="Grayscale Image"):
+    img = tensor_img.cpu().numpy()[0]  # erster Kanal, Form [H, W]
+    plt.imshow(img, cmap='gray')
+    plt.title(title)
+    plt.axis('off')
+    plt.show()
 
-class EmbeddingNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        base_model = models.resnet50(pretrained=True)
-        self.feature_extractor = nn.Sequential(*list(base_model.children())[:-1])  # ohne FC
-        self.embedding = nn.Linear(2048, 128)  # 128-dim Embedding
-
-    def forward(self, x):
-        x = self.feature_extractor(x)  # [B, 2048, 1, 1]
-        x = x.view(x.size(0), -1)      # [B, 2048]
-        x = self.embedding(x)          # [B, 128]
-        x = nn.functional.normalize(x, p=2, dim=1)  # L2-Norm
-        return x
 
 """Crops images in a circular shape and resizes them. NO GRAYSCALING"""
 def preprocess_batch_crop_only(batch, img_size=224):
@@ -68,17 +64,22 @@ def preprocess_batch_grayscale(batch, img_size=224):
 
 
 def train_model():
-    model = EmbeddingNet().to("cuda" if torch.cuda.is_available() else "cpu")
+    """Train the triplet network model."""
+    model = EmbeddingNet(embedding_dim=128).to("cuda" if torch.cuda.is_available() else "cpu")
+    #model = EmbeddingNet().to("cuda" if torch.cuda.is_available() else "cpu")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+    
+
     criterion = nn.TripletMarginLoss(margin=0.3)
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4) # lr = learning rate 
 
     for epoch in range(10):
         model.train()
         total_train_loss = 0
         for anchor, positive, negative in train_loader:
-
+            """
             if use_grayscale:   
                 # Preprocess images for grayscale
                 anchor = preprocess_batch_grayscale(anchor)
@@ -89,6 +90,9 @@ def train_model():
                 anchor = preprocess_batch_crop_only(anchor)
                 positive = preprocess_batch_crop_only(positive)
                 negative = preprocess_batch_crop_only(negative)
+            """
+            #show_image(anchor[0], title=f"Epoch {epoch+1} - Anchor Image")
+            #break 
 
             anchor = anchor.to(device)
             positive = positive.to(device)
@@ -132,6 +136,8 @@ def train_model():
     model_path = os.path.join(current_dir, "..", "modell", model_name)
 
     torch.save(model.state_dict(), model_path)
+
+
 
 
 

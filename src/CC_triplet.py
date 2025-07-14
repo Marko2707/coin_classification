@@ -15,7 +15,7 @@ from pytorch_grad_cam import GradCAM
 from training_triplets import preprocess_batch_grayscale, preprocess_batch_crop_only  # deine beiden Funktionen
 
 # ---------- SETTINGS ---------- #
-use_grayscale_and_crop = False  # Setze False für nur Crop
+use_grayscale_and_crop = True  # Setze False für nur Crop
 
 
 # ---------- SETTINGS ---------- #
@@ -27,7 +27,9 @@ model = EmbeddingNet().to(device)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(current_dir, "..", "modell", "triplet_model.pth")
 model.load_state_dict(torch.load(model_path, map_location=device))
+print(f"Modell geladen: {model.__class__.__name__}")
 model.eval()
+
 
 # ---------- GRAD-CAM SETUP ---------- #
 target_layer = model.feature_extractor[7][2].conv3
@@ -35,7 +37,8 @@ cam = GradCAM(model=model, target_layers=[target_layer])
 
 # ---------- IMAGE LOADING ---------- #
 # image_dir = os.path.join(current_dir, "..", "dataset", "obverse", "Prot")
-image_dir = os.path.join(current_dir, "..", "entirety", "obv")
+image_dir = os.path.join(current_dir, "..", "entirety", "processed_images")
+#image_dir = os.path.join(current_dir, "..", "entirety", "obv")
 image_paths = [os.path.join(image_dir, f) for f in os.listdir(image_dir) if f.endswith(".jpg")]
 
 image_tensors = []
@@ -44,21 +47,23 @@ for p in image_paths:
     img_tensor = transforms.ToTensor()(img)  # float tensor [3, 224, 224]
     image_tensors.append(img_tensor)
 
-batch = torch.stack(image_tensors)  # [B, 3, 224, 224]
+processed_batch = torch.stack(image_tensors)  # [B, 3, 224, 224]
 
 # ---------- PREPROCESSING ---------- #
+"""
 if use_grayscale_and_crop:
     processed_batch = preprocess_batch_grayscale(batch, img_size=224)          # mit Grayscale + Crop
 else:
     processed_batch = preprocess_batch_crop_only(batch, img_size=224)  # nur Crop
 
 processed_batch = processed_batch.to(device)
-
+"""
 # ---------- FEATURE EXTRACTION ---------- #
+
 embeddings = []
 with torch.no_grad():
     for img_tensor in processed_batch:
-        emb = model(img_tensor.unsqueeze(0))
+        emb = model(img_tensor.unsqueeze(0).to(device))
         embeddings.append(emb.squeeze().cpu().numpy())
 
 X = np.array(embeddings)

@@ -1,0 +1,9 @@
+pandas
+scikit-learn
+matplotlib
+numpy
+opencv-python
+pillow
+hdbscan
+git+https://github.com/jacobgil/pytorch-grad-cam.git
+torch==2.2.2+cu118 torchvision==0.17.2+cu118 torchaudio==2.2.2 --index-url https://download.pytorch.org/whl/cu118
