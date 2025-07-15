@@ -69,7 +69,7 @@ with torch.no_grad():
 X = np.array(embeddings)
 
 # ---------- CLUSTERING ---------- #
-clusterer = hdbscan.HDBSCAN(min_cluster_size=2, min_samples=1, cluster_selection_method='eom', metric='euclidean')
+clusterer = hdbscan.HDBSCAN(min_cluster_size=5, min_samples=2, cluster_selection_method='eom', metric='euclidean') #euclidean, cosine, manhattan, eom, leaf
 labels = clusterer.fit_predict(X)
 
 print("Cluster-Zuordnung der Münzbilder:\n")
