@@ -22,8 +22,8 @@ def visualize_clusters(clustered_images, cam, device, images_per_page=10,):
         device (torch.device): Device to run the model on (CPU or GPU).
         images_per_page (int): Number of images to display per page.
     """
-
-    for cluster_label in sorted(clustered_images.keys()):
+    sorted_labels = sorted(clustered_images.keys(), key=lambda x: (x == -1, x))
+    for cluster_label in sorted_labels:
         subset = clustered_images[cluster_label]
         num_images = len(subset)
         num_pages = math.ceil(num_images / images_per_page)
