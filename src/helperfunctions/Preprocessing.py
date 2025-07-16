@@ -1,7 +1,3 @@
-"""Module to preprocess data for training and evaluation."""
-import cv2
-import numpy as np
-
 """Apply a circular crop to an image.
 This function reads an image from the specified path, applies a circular crop, and returns the cropped image. 
 Original Source provided by our Tutors: https://github.com/Urjarm/DieStudyTool/blob/main/utils.py Original Author: Markus Fiedler
@@ -10,7 +6,8 @@ Modified for use under Windows and to return the cropped image directly.
 import cv2
 import numpy as np
 
-def apply_circle_crop(image, img_size=448, percentage=0.95, resize=True, neutral_color=(123, 117, 104)):
+
+def apply_circle_crop(image, img_size=224, percentage=0.95, resize=True, neutral_color=(123, 117, 104)):
     """
     image: input image als BGR np.array uint8
     img_size: Zielgröße (Quadrat)
@@ -47,7 +44,7 @@ Original Source provided by our Tutors: https://github.com/Urjarm/DieStudyTool/b
 
 Modified for use under Windows and to return the cropped image directly.
 """
-def apply_grayscale(image, img_size=448, keep_ratio=False):
+def apply_grayscale(image, img_size=224, keep_ratio=False):
     # Convert to grayscale if not already
     if len(image.shape) == 3 and image.shape[2] == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -75,28 +72,3 @@ if __name__ == "__main__":
     cv2.imshow("Grayscale Image", grayscale_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-    create_folder = True  # Set to False if you don't want to save the images
-    if create_folder:
-        import os
-        
-        input_folder = "entirety/obv"
-        output_folder = "entirety/processed_images"
-        os.makedirs(output_folder, exist_ok=True)
-
-        for filename in os.listdir(input_folder):
-            if filename.lower().endswith(".jpg"):
-                image_path = os.path.join(input_folder, filename)
-                image = cv2.imread(image_path)
-
-                if image is None:
-                    print(f"Fehler beim Laden von: {image_path}")
-                    continue
-
-                # Anwenden der Verarbeitung
-                cropped_image = apply_circle_crop(image, img_size=448, percentage=0.95)
-                grayscale_image = apply_grayscale(cropped_image, img_size=448, keep_ratio=True)
-
-                # Bild speichern
-                output_path = os.path.join(output_folder, filename)
-                cv2.imwrite(output_path, grayscale_image)

@@ -6,11 +6,6 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 import os
 from collections import defaultdict
 
-"""
-clustered_images = defaultdict(list)
-for label, img_tensor, path in zip(labels, images, image_paths):
-    clustered_images[label].append((img_tensor, path))
-"""
 
 def visualize_clusters(clustered_images, cam, device, images_per_page=10,):
     """
