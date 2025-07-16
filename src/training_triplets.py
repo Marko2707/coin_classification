@@ -28,7 +28,7 @@ def show_image(tensor_img, title="Grayscale Image"):
 
 
 """Crops images in a circular shape and resizes them. NO GRAYSCALING"""
-def preprocess_batch_crop_only(batch, img_size=224):
+def preprocess_batch_crop_only(batch, img_size=448):
     batch_np = batch.permute(0, 2, 3, 1).cpu().numpy()  # [B, H, W, C]
     processed = []
 
@@ -44,7 +44,7 @@ def preprocess_batch_crop_only(batch, img_size=224):
 
 
 """Crops images in a circular shape and resizes them with grayscale conversion."""
-def preprocess_batch_grayscale(batch, img_size=224):
+def preprocess_batch_grayscale(batch, img_size=448):
     batch_np = batch.permute(0, 2, 3, 1).cpu().numpy()  # [B, H, W, C]
     processed = []
 

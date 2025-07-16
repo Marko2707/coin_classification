@@ -10,7 +10,7 @@ Modified for use under Windows and to return the cropped image directly.
 import cv2
 import numpy as np
 
-def apply_circle_crop(image, img_size=224, percentage=0.95, resize=True, neutral_color=(123, 117, 104)):
+def apply_circle_crop(image, img_size=448, percentage=0.95, resize=True, neutral_color=(123, 117, 104)):
     """
     image: input image als BGR np.array uint8
     img_size: Zielgröße (Quadrat)
@@ -47,7 +47,7 @@ Original Source provided by our Tutors: https://github.com/Urjarm/DieStudyTool/b
 
 Modified for use under Windows and to return the cropped image directly.
 """
-def apply_grayscale(image, img_size=224, keep_ratio=False):
+def apply_grayscale(image, img_size=448, keep_ratio=False):
     # Convert to grayscale if not already
     if len(image.shape) == 3 and image.shape[2] == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -94,8 +94,8 @@ if __name__ == "__main__":
                     continue
 
                 # Anwenden der Verarbeitung
-                cropped_image = apply_circle_crop(image, img_size=224, percentage=0.95)
-                grayscale_image = apply_grayscale(cropped_image, img_size=224, keep_ratio=True)
+                cropped_image = apply_circle_crop(image, img_size=448, percentage=0.95)
+                grayscale_image = apply_grayscale(cropped_image, img_size=448, keep_ratio=True)
 
                 # Bild speichern
                 output_path = os.path.join(output_folder, filename)

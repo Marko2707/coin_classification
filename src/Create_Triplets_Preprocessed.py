@@ -52,7 +52,7 @@ for i, row in subset.iterrows():
         # 1) Originalbild kopieren (normal)
         # 1) Originalbild laden und auf Größe bringen
         img_normal = cv2.imread(src_path)
-        img_normal_resized = cv2.resize(img_normal, (224, 224))
+        img_normal_resized = cv2.resize(img_normal, (448, 448))
 
         dst_path_normal = os.path.join(triple_folder_names["normal"], full_entry)
         if not os.path.exists(dst_path_normal):
@@ -61,14 +61,14 @@ for i, row in subset.iterrows():
 
         # 2) Bild laden und Circle Crop anwenden
         img = cv2.imread(src_path)
-        cropped_img = apply_circle_crop(img, img_size=224)  # Passe img_size ggf. an
+        cropped_img = apply_circle_crop(img, img_size=448)  # Passe img_size ggf. an
 
         dst_path_cropped = os.path.join(triple_folder_names["cropped"], full_entry)
         if not os.path.exists(dst_path_cropped):
             save_image(cropped_img, dst_path_cropped)
 
         # 3) Crop + Graustufen
-        grayscale_img = apply_grayscale(cropped_img, img_size=224)
+        grayscale_img = apply_grayscale(cropped_img, img_size=448)
 
         if grayscale_img.dtype != np.uint8:
             grayscale_img = (grayscale_img * 255).astype(np.uint8)
