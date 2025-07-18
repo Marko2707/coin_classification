@@ -28,11 +28,14 @@ image_dir = os.path.join(current_dir, "..", "entirety", "rev_processed_images") 
 #image_dir = os.path.join(current_dir, "..", "entirety", "obv")
 #image_dir = os.path.join(current_dir, "..", "entirety", "rev")
 
+# Model Path, Name and Type:
+model_name = "resnet_50_pretrained_rev_crop-grayscale_100-epochs.pth"  # Name of the model to load
+
 # Clustering Configuration:
 min_cluster_size = 2  # Minimum size of clusters 
 min_samples = 2  # Minimum number of samples in a neighborhood for a point to be considered a core point
-metric = 'manhattan'  # Distance metric for clustering (e.g., 'euclidean', 'cosine', 'manhattan')
-cluster_selection_method = 'leaf'  # Method to select clusters (e.g., 'eom', 'leaf')
+metric = 'manhattan'  # Distance metric for clustering (RECOMMENDED: 'manhattan', 'euclidean' gave worse results)
+cluster_selection_method = 'leaf'  # Method to select clusters --> leaf is recommended. eom gave way worse results 
 # ---------------------------------------------------|
 
 
@@ -42,7 +45,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 model = EmbeddingNet().to(device)
 current_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(current_dir, "..", "modell", "triplet_model.pth")
+model_path = os.path.join(current_dir, "..", "modell", model_name)
 model.load_state_dict(torch.load(model_path, map_location=device))
 print(f"Modell geladen: {model.__class__.__name__}")
 model.eval()
