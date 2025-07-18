@@ -12,9 +12,14 @@ from model import EmbeddingNet
 from torch.utils.data import random_split
 
 # --- Configuration ------------------------------------|
+
 # Path for training and validation data
-#train_data_path = "Trainingsset/obverse/cropped_grayscale"
-train_data_path = "Trainingsset/reverse/cropped_grayscale"
+# Ovverse Images:
+#train_data_path = "Trainingsset/obverse/cropped_grayscale" 
+
+#Reverse Images:
+#train_data_path = "Trainingsset/reverse/cropped_grayscale"
+train_data_path = "Trainingsset/reverse/cropped"  # For cropped images
 
 # Test/Validation Split
 val_split = 0.8
@@ -26,10 +31,17 @@ img_size = 224  # Image Resulution for processing
 batch_size = 16  # Batch Size for training and validation
 
 # epochs 
-epochs = 5  # Number of epochs for training
+epochs = 100  # Number of epochs for training
 #epochs = 50
 
 # We used both the pretrained and untrained resnet50 model --> To change that go to the model.py file  
+#model_name = "resnet_50_pretrained_" + "rev_" + "crop-grayscale_" + str(epochs) + "-epochs.pth" # Name of the model to save
+model_name = "resnet_50_pretrained_" + "rev_" + "crop_" + str(epochs) + "-epochs.pth" # Name of the model to save
+#model_name = "resnet_50_pretrained_" + "rev_" + "normal_" + str(epochs) + "-epochs.pth" # Name of the model to save
+
+#model_name = "resnet_50_untrained_" + "rev_" + "crop-grayscale_" + str(epochs) + "-epochs.pth" # Name of the model to save
+#model_name = "resnet_50_untrained_" + "rev_" + "crop_" + str(epochs) + "-epochs.pth" # Name of the model to save
+#model_name = "resnet_50_untrained_" + "rev_" + "normal_" + str(epochs) + "-epochs.pth" # Name of the model to save
 #------------------------------------------------------|
 
 
@@ -120,7 +132,6 @@ def train_model():
 
         print(f"Epoch {epoch+1}: Train Loss = {avg_train_loss:.4f} | Val Loss = {avg_val_loss:.4f}")
  
-    model_name = "triplet_model.pth"
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     model_path = os.path.join(current_dir, "..", "modell", model_name)
