@@ -1,3 +1,5 @@
+""" Grad-CAM Visualization both for images sorted by name and also for clusters.
+"""
 import math
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -7,6 +9,7 @@ import os
 from collections import defaultdict
 
 
+"""Visualizes clusters and orders images using Grad-CAM heatmaps."""
 def visualize_clusters(clustered_images, cam, device, images_per_page=10,):
     """
     Visualizes clusters with Grad-CAM heatmaps.
@@ -55,6 +58,7 @@ def visualize_clusters(clustered_images, cam, device, images_per_page=10,):
             plt.show()
 
 def visualize_order(images, image_paths, cam, device, images_per_page = 10):
+    """Orders heat map images as clusters (not sorted by name) using Grad-CAM heatmaps."""
     num_pages = math.ceil(len(images) / images_per_page)
 
     for page in range(num_pages):
@@ -62,18 +66,18 @@ def visualize_order(images, image_paths, cam, device, images_per_page = 10):
         end_idx = min((page + 1) * images_per_page, len(images))
         subset = list(zip(images[start_idx:end_idx], image_paths[start_idx:end_idx]))
 
-        plt.figure(figsize=(12, 3 * len(subset)))  # Breite anpassen nach Bedarf
+        plt.figure(figsize=(12, 3 * len(subset)))
 
         for i, (img_tensor, path) in enumerate(subset):
             input_tensor = img_tensor.unsqueeze(0).to(device)
             grayscale_cam = cam(input_tensor=input_tensor)[0]
 
-            # Originalbild vorbereiten
+            # Original image
             img_pil = Image.open(path).convert("RGB").resize((224, 224))
             img_np = np.array(img_pil).astype(np.float32) / 255.0
             visualization = show_cam_on_image(img_np, grayscale_cam, use_rgb=True)
 
-            # Originalbild
+            # Original image
             plt.subplot(len(subset), 2, 2 * i + 1)
             plt.imshow(img_np)
             plt.axis("off")
@@ -87,5 +91,5 @@ def visualize_order(images, image_paths, cam, device, images_per_page = 10):
 
         plt.tight_layout()
         plt.suptitle(f"Seite {page + 1}/{num_pages}", fontsize=16)
-        plt.subplots_adjust(top=0.95)  # Platz für Titel
+        plt.subplots_adjust(top=0.95) 
         plt.show()

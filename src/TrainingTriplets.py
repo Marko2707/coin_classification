@@ -1,3 +1,4 @@
+""" This script trains a triplet network model using the created triplet images. """
 import os
 import torch
 import torch.optim as optim
@@ -8,7 +9,8 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 from helperfunctions.Dataloader import TripletFolderDataset
 import matplotlib.pyplot as plt
-from model import EmbeddingNet
+from resnet50_model import EmbeddingNet
+from EfficientNet_B0_model import EmbeddingNet as EfficientNetEmbeddingNet
 from torch.utils.data import random_split
 
 # --- Configuration ------------------------------------|
@@ -18,8 +20,9 @@ from torch.utils.data import random_split
 #train_data_path = "Trainingsset/obverse/cropped_grayscale" 
 
 #Reverse Images:
-#train_data_path = "Trainingsset/reverse/cropped_grayscale"
-train_data_path = "Trainingsset/reverse/cropped"  # For cropped images
+train_data_path = "Trainingsset/reverse/cropped_grayscale"
+#train_data_path = "Trainingsset/reverse/cropped"  # For cropped images
+#train_data_path = "Trainingsset/reverse/normal"  # For normal images
 
 # Test/Validation Split
 val_split = 0.8
@@ -36,19 +39,20 @@ epochs = 100  # Number of epochs for training
 
 # We used both the pretrained and untrained resnet50 model --> To change that go to the model.py file  
 #model_name = "resnet_50_pretrained_" + "rev_" + "crop-grayscale_" + str(epochs) + "-epochs.pth" # Name of the model to save
-model_name = "resnet_50_pretrained_" + "rev_" + "crop_" + str(epochs) + "-epochs.pth" # Name of the model to save
+#model_name = "resnet_50_pretrained_" + "rev_" + "crop_" + str(epochs) + "-epochs.pth" # Name of the model to save
 #model_name = "resnet_50_pretrained_" + "rev_" + "normal_" + str(epochs) + "-epochs.pth" # Name of the model to save
 
-#model_name = "resnet_50_untrained_" + "rev_" + "crop-grayscale_" + str(epochs) + "-epochs.pth" # Name of the model to save
+model_name = "resnet_50_untrained_" + "rev_" + "crop-grayscale_" + str(epochs) + "-epochs.pth" # Name of the model to save
 #model_name = "resnet_50_untrained_" + "rev_" + "crop_" + str(epochs) + "-epochs.pth" # Name of the model to save
 #model_name = "resnet_50_untrained_" + "rev_" + "normal_" + str(epochs) + "-epochs.pth" # Name of the model to save
+
+model_name = "efficient_b0_pretrained_rev_crop-grayscale_100-epochs.pth"  # Name of the model to save
 #------------------------------------------------------|
 
 
-# 1 . Transformation 
+# 1 . Transformation (Parameters are the same as used for original ResNet50 model) 
 transform = transforms.Compose([
     transforms.Resize((img_size, img_size)),  
-    #transforms.Resize((348, 348)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225])
@@ -57,17 +61,16 @@ transform = transforms.Compose([
 # 2. Load Dataset
 dataset = TripletFolderDataset(train_data_path, transform=transform)
 
-# 3. Aufteilen in Training und Validierung
+# 3. Split Dataset into training and validation sets
 train_size = int(val_split * len(dataset))
 val_size = len(dataset) - train_size
 train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
-# 4. DataLoader 
+# 4. DataLoader (Loading the data in batches)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-
-
+# Helper function to show an image 
 def show_image(tensor_img, title="Grayscale Image"):
     img = tensor_img.cpu().numpy()[0]  
     plt.imshow(img, cmap='gray')
@@ -78,7 +81,9 @@ def show_image(tensor_img, title="Grayscale Image"):
 
 def train_model():
     """Train the triplet network model."""
-    model = EmbeddingNet(embedding_dim=128).to("cuda" if torch.cuda.is_available() else "cpu")
+    #model = EmbeddingNet(embedding_dim=128).to("cuda" if torch.cuda.is_available() else "cpu")
+    model = EfficientNetEmbeddingNet(embedding_dim=128).to("cuda" if torch.cuda.is_available() else "cpu")
+
     #model = EmbeddingNet().to("cuda" if torch.cuda.is_available() else "cpu")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

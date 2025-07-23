@@ -1,3 +1,4 @@
+""" CoinClustering.py: Clustering and Visualization of Coin Images using HDBSCAN and Grad-CAM utilizing triplet trained resnet50 model."""
 import os
 import torch
 import numpy as np
@@ -9,13 +10,13 @@ import hdbscan
 from torchvision import transforms
 
 from TrainingTriplets import EmbeddingNet
+from EfficientNet_B0_model import EmbeddingNet as EfficientNetEmbeddingNet
 from helperfunctions.GradCamVisualization import visualize_clusters, visualize_order
 from pytorch_grad_cam import GradCAM
 
-
 # ---Configuration------------------------------------|
 # GradCam Visualisation:
-mode = 1  # 1 = ClusterVisualization, 2 = OrderVisualization
+mode = 1  # 1 = ClusterVisualization (Visualize based on Clusters (Recommended)), 2 = OrderVisualization (Visualizes images sorted by name)
 
 # Image Directory:
 current_dir = os.path.dirname(os.path.abspath(__file__)) # Dont Change this line
@@ -30,6 +31,7 @@ image_dir = os.path.join(current_dir, "..", "entirety", "rev_processed_images") 
 
 # Model Path, Name and Type:
 model_name = "resnet_50_pretrained_rev_crop-grayscale_100-epochs.pth"  # Name of the model to load
+#model_name = "efficient_b0_pretrained_rev_crop-grayscale_100-epochs.pth"  #TO USE THE EFFICIENTNET MODEL --> CHANGE model in MODEL LOADING below!
 
 # Clustering Configuration:
 min_cluster_size = 2  # Minimum size of clusters 
@@ -43,7 +45,12 @@ cluster_selection_method = 'leaf'  # Method to select clusters --> leaf is recom
 # ---------- MODEL LOADING ---------- #
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
+
+# Choosing the model type with its class to switch MODELS: 
 model = EmbeddingNet().to(device)
+#model = EfficientNetEmbeddingNet().to(device)
+
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(current_dir, "..", "modell", model_name)
 model.load_state_dict(torch.load(model_path, map_location=device))
@@ -52,7 +59,9 @@ model.eval()
 
 
 # ---------- GRAD-CAM SETUP ---------- #
-target_layer = model.feature_extractor[7][2].conv3 # Last convolutional layer of the modified ResNet50
+#target_layer = model.feature_extractor[7][2].conv3 # Last convolutional layer of our modified ResNet50 (needed for Grad-CAM)
+target_layer = model.base.features[6]  # Alternativ vorletzter Block
+
 cam = GradCAM(model=model, target_layers=[target_layer])
 
 
@@ -75,8 +84,10 @@ with torch.no_grad():
 X = np.array(embeddings)
 
 # ---------- CLUSTERING ---------- #
+# HDBSCAN clustering (HDBSCAN is a density-based clustering algorithm, H = Hierarchical, DBSCAN = Density-Based Spatial Clustering) 
 clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, 
                             min_samples=min_samples, cluster_selection_method=cluster_selection_method, metric=metric)
+# Fit the model to the embeddings
 labels = clusterer.fit_predict(X)
 
 print("Cluster-Zuordnung der Münzbilder:\n")
@@ -87,9 +98,12 @@ n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
 n_outliers = list(labels).count(-1)
 
 print(f"\nGefundene Cluster: {n_clusters}")
+print(f"Durchschnittliche Clustergröße: {len(labels) / n_clusters if n_clusters > 0 else 0:.2f}")
 print(f"Outlier (nicht zugeordnet): {n_outliers}")
 
 # ---------- t-SNE VISUALIZATION ---------- #
+# t-SNE for dimensionality reduction to 2D for visualization 
+# Groups similar images together in a 2D space and color codes them by cluster
 tsne = TSNE(n_components=2, random_state=0)
 X_2d = tsne.fit_transform(X)
 
@@ -103,6 +117,7 @@ plt.grid(True)
 plt.show()
 
 # ---------- Cluster Visualization ---------- #
+# Visualization of the clusters using Grad-CAM heatmaps
 if mode == 1:
     clustered_images = defaultdict(list)
     for label, img_tensor, path in zip(labels, processed_batch, image_paths):

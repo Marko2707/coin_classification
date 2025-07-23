@@ -1,3 +1,7 @@
+"""Creates triplet images from a CSV file and saves them in specified folders.
+The CSV should contain columns: Anchor, Positive, Negative. """
+
+# RUN THIS FILE FOR TRIPLET CREATION! 
 import os
 import shutil
 import pandas as pd
@@ -5,29 +9,28 @@ import cv2
 import numpy as np
 from helperfunctions.Preprocessing import apply_circle_crop, apply_grayscale
 
-"""Creates triplet images from a CSV file and saves them in specified folders.
-The CSV should contain columns: Anchor, Positive, Negative. """
 
 # |--- Configuration ------------------------------------| 
 img_size = 224  # Image resolution for processing
 
-# All triplet image types are created: normal, cropped, cropped_grayscale
+# Here all triplet image types are created: normal, cropped, cropped_grayscale
 #------------------------------------------------------
 
 
 def create_triplets(csv_path, images_dir, output_base):
-    # Lese CSV
+    # Read CSV
     df = pd.read_csv(csv_path)
 
-    # Optional: Nur jeden 5. Eintrag nehmen, um Overfitting zu reduzieren
+    # Optional: If you want to use only every 5th entry for triplet cration:
     #subset = df.iloc[::5].reset_index(drop=True)
-    # Oder alle Einträge verwenden:
+
+    # Use for everyting
     subset = df.reset_index(drop=True)
 
-    # Erstelle Basisordner
+    # Create output base directory if it doesn't exist
     os.makedirs(output_base, exist_ok=True)
 
-    # Ordner für Varianten anlegen
+    # Create folders for each type of triplet
     folders = {
         "normal": os.path.join(output_base, "normal"),
         "cropped": os.path.join(output_base, "cropped"),
@@ -38,7 +41,7 @@ def create_triplets(csv_path, images_dir, output_base):
         os.makedirs(f, exist_ok=True)
 
     def save_image(img_array, path):
-        # img_array erwartet BGR uint8 Bild (wie von cv2)
+        # img_array expected to be a numpy array of type uint8
         cv2.imwrite(path, img_array)
 
     for i, row in subset.iterrows():
@@ -47,7 +50,7 @@ def create_triplets(csv_path, images_dir, output_base):
             os.makedirs(f, exist_ok=True)
 
         for kind in ["Anchor", "Positive", "Negative"]:
-            full_entry = row[kind]  # z.B. "Anchor_133_a.jpg"
+            full_entry = row[kind]  # examle : "Anchor_133_a.jpg"
             file_part = "_".join(full_entry.split("_")[1:])
             src_path = os.path.join(images_dir, file_part)
 
@@ -55,7 +58,7 @@ def create_triplets(csv_path, images_dir, output_base):
                 print(f"Datei nicht gefunden: {src_path}")
                 continue
 
-            # 1) Originalbild laden und auf Größe bringen
+            # 1) Resizing the normal image 
             img_normal = cv2.imread(src_path)
             img_normal_resized = cv2.resize(img_normal, (img_size, img_size))
 
@@ -64,15 +67,15 @@ def create_triplets(csv_path, images_dir, output_base):
                 save_image(img_normal_resized, dst_path_normal)
 
 
-            # 2) Bild laden und Circle Crop anwenden
+            # 2) Load image and apply circular crop 
             img = cv2.imread(src_path)
-            cropped_img = apply_circle_crop(img, img_size=img_size)  # Passe img_size ggf. an
+            cropped_img = apply_circle_crop(img, img_size=img_size)  # Make sure image size is same
 
             dst_path_cropped = os.path.join(triple_folder_names["cropped"], full_entry)
             if not os.path.exists(dst_path_cropped):
                 save_image(cropped_img, dst_path_cropped)
 
-            # 3) Crop + Graustufen
+            # 3) Crop and Grayscle 
             grayscale_img = apply_grayscale(cropped_img, img_size=img_size)
 
             if grayscale_img.dtype != np.uint8:

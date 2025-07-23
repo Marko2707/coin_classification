@@ -1,13 +1,15 @@
+""" EmbeddingNet class for generating image embeddings using a pre-trained or not pretrained ResNet50 model."""
 import torch
 import torch.nn as nn
 import torchvision.models as models
 import torch.nn.functional as F
 
+
 class EmbeddingNet(nn.Module):
     def __init__(self, embedding_dim=128):
         super().__init__()
 
-        #base_model = models.resnet50(pretrained=True)
+        #base_model = models.resnet50(pretrained=False)
         base_model = models.resnet50(pretrained=True) 
 
 
