@@ -34,19 +34,19 @@ img_size = 224  # Image Resulution for processing
 batch_size = 16  # Batch Size for training and validation
 
 # epochs 
-epochs = 100  # Number of epochs for training
+epochs = 10  # Number of epochs for training
 #epochs = 50
 
 # We used both the pretrained and untrained resnet50 model --> To change that go to the model.py file  
 #model_name = "resnet_50_pretrained_" + "rev_" + "crop-grayscale_" + str(epochs) + "-epochs.pth" # Name of the model to save
 #model_name = "resnet_50_pretrained_" + "rev_" + "crop_" + str(epochs) + "-epochs.pth" # Name of the model to save
-#model_name = "resnet_50_pretrained_" + "rev_" + "normal_" + str(epochs) + "-epochs.pth" # Name of the model to save
+model_name = "resnet_50_pretrained_" + "rev_" + "normal_" + str(epochs) + "-epochs.pth" # Name of the model to save
 
-model_name = "resnet_50_untrained_" + "rev_" + "crop-grayscale_" + str(epochs) + "-epochs.pth" # Name of the model to save
+#model_name = "resnet_50_untrained_" + "rev_" + "crop-grayscale_" + str(epochs) + "-epochs.pth" # Name of the model to save
 #model_name = "resnet_50_untrained_" + "rev_" + "crop_" + str(epochs) + "-epochs.pth" # Name of the model to save
 #model_name = "resnet_50_untrained_" + "rev_" + "normal_" + str(epochs) + "-epochs.pth" # Name of the model to save
 
-model_name = "efficient_b0_pretrained_rev_crop-grayscale_100-epochs.pth"  # Name of the model to save
+#model_name = "efficient_b0_pretrained_rev_crop-grayscale_100-epochs.pth"  # Name of the model to save
 #------------------------------------------------------|
 
 
@@ -81,8 +81,8 @@ def show_image(tensor_img, title="Grayscale Image"):
 
 def train_model():
     """Train the triplet network model."""
-    #model = EmbeddingNet(embedding_dim=128).to("cuda" if torch.cuda.is_available() else "cpu")
-    model = EfficientNetEmbeddingNet(embedding_dim=128).to("cuda" if torch.cuda.is_available() else "cpu")
+    model = EmbeddingNet(embedding_dim=128).to("cuda" if torch.cuda.is_available() else "cpu")
+    #model = EfficientNetEmbeddingNet(embedding_dim=128).to("cuda" if torch.cuda.is_available() else "cpu")
 
     #model = EmbeddingNet().to("cuda" if torch.cuda.is_available() else "cpu")
 

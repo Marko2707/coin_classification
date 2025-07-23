@@ -31,7 +31,7 @@ image_dir = os.path.join(current_dir, "..", "entirety", "rev_processed_images") 
 
 # Model Path, Name and Type:
 model_name = "resnet_50_pretrained_rev_crop-grayscale_100-epochs.pth"  # Name of the model to load
-#model_name = "efficient_b0_pretrained_rev_crop-grayscale_100-epochs.pth"  #TO USE THE EFFICIENTNET MODEL --> CHANGE model in MODEL LOADING below!
+#model_name = "efficient_b0_pretrained_rev_crop-grayscale_100-epochs.pth"  #TO USE THE EFFICIENTNET MODEL --> CHANGE model in MODEL LOADING below and Target Layer in Grad-CAM Setup below!
 
 # Clustering Configuration:
 min_cluster_size = 2  # Minimum size of clusters 
@@ -59,8 +59,8 @@ model.eval()
 
 
 # ---------- GRAD-CAM SETUP ---------- #
-#target_layer = model.feature_extractor[7][2].conv3 # Last convolutional layer of our modified ResNet50 (needed for Grad-CAM)
-target_layer = model.base.features[6]  # Alternativ vorletzter Block
+target_layer = model.feature_extractor[7][2].conv3 # Last convolutional layer of our modified ResNet50 (needed for Grad-CAM)
+#target_layer = model.base.features[6]  # Alternativ vorletzter Block
 
 cam = GradCAM(model=model, target_layers=[target_layer])
 
@@ -96,9 +96,10 @@ for path, label in zip(image_paths, labels):
 
 n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
 n_outliers = list(labels).count(-1)
+cluster_points = len(labels) - n_outliers
 
 print(f"\nGefundene Cluster: {n_clusters}")
-print(f"Durchschnittliche Clustergröße: {len(labels) / n_clusters if n_clusters > 0 else 0:.2f}")
+print(f"Durchschnittliche Clustergröße: {cluster_points / n_clusters if n_clusters > 0 else 0:.2f}")
 print(f"Outlier (nicht zugeordnet): {n_outliers}")
 
 # ---------- t-SNE VISUALIZATION ---------- #
